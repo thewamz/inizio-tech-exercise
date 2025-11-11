@@ -1,0 +1,39 @@
+# Ignore IDE settings
+.vscode/
+
+# Ignore virtual enviroment
+env*/
+env-deploy/
+
+# Jupyter notebooks cache files
+.ipynb_checkpoints
+
+# data folder
+data/
+
+# Ignore pycache files
+__pycache__/
+
+# Ignore sqlite3 db
+*.db
+
+# Ignore htmlcov from coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# ignore env vars
+.env
+
+# ignore distribution files
+build/
+dist/
+.eggs
+*.egg-info
+
+# Ignore tox cache
+.tox/
+
+# Ignore envrc
+.envrc
+.env.local

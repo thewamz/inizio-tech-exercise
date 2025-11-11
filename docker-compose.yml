@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  inizio:
+    image: inizio:${APP_VERSION}
+    build:
+      context: "."
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/code
+      - ./data:/code/data
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.docker
+    environment:
+      - LOG_LEVEL=debug
