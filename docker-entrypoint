@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# this is the entrypoint for the api container
+
+set -e
+
+if [ "x$PUBMED_FETCH" = 'xon' ];
+then
+    echo "Fetch articles from pubmed..."
+    python run_pipeline.py
+fi
+
+exec "$@"
