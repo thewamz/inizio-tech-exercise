@@ -1,10 +1,10 @@
-from __future__ import annotations
-
 import asyncio
 import json
 import os
 from pathlib import Path
 import httpx
+
+from xml.etree import ElementTree as ET
 
 from .models import PubMedArticle, PipelineConfig
 
@@ -14,63 +14,59 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 async def _pubmed_search_ids(config: PipelineConfig) -> list[str]:
     """Search PubMed for PMIDs matching query + year (async)."""
-    term = f"{config.query} AND {config.year}[pdat]"
-    params = {
-        "db": "pubmed",
-        "term": term,
-        "retmode": "json",
-        "retmax": config.retmax,
-    }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        r = await client.get(
+        response = await client.get(
             "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
-            params=params,
+            params={
+                "db": "pubmed",
+                "term": f"{config.query} AND {config.year}[pdat]",
+                "retmode": "json",
+                "retmax": config.retmax,
+            },
         )
-    r.raise_for_status()
-    data = r.json()
-    return data.get("esearchresult", {}).get("idlist", [])
+    response.raise_for_status()
+
+    return response.json().get("esearchresult", {}).get("idlist", [])
 
 
 async def _pubmed_fetch_summaries(pmids: list[str]) -> dict:
     """Fetch summaries for PMIDs (title, journal, pubdate) asynchronously."""
     if not pmids:
-        return {}
+        return None
 
-    params = {
-        "db": "pubmed",
-        "id": ",".join(pmids),
-        "retmode": "json",
-    }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        r = await client.get(
+        response = await client.get(
             "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi",
-            params=params,
+            params={
+                "db": "pubmed",
+                "id": ",".join(pmids),
+                "retmode": "json",
+            },
         )
-    r.raise_for_status()
-    return r.json().get("result", {})
+    response.raise_for_status()
+
+    return response.json().get("result", {})
 
 
 async def _pubmed_fetch_abstracts(pmids: list[str]) -> dict:
     """Fetch abstracts for PMIDs asynchronously."""
     if not pmids:
-        return {}
+        return None
 
-    params = {
-        "db": "pubmed",
-        "rettype": "abstract",
-        "retmode": "xml",
-        "id": ",".join(pmids),
-    }
     async with httpx.AsyncClient(timeout=30.0) as client:
-        r = await client.get(
+        response = await client.get(
             "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
-            params=params,
+            params={
+                "db": "pubmed",
+                "rettype": "abstract",
+                "retmode": "xml",
+                "id": ",".join(pmids),
+            },
         )
-    r.raise_for_status()
+    response.raise_for_status()
 
-    from xml.etree import ElementTree as ET
+    root = ET.fromstring(response.text)
 
-    root = ET.fromstring(r.text)
     abstracts: dict[str, str] = {}
     for article in root.findall(".//PubmedArticle"):
         pmid_elem = article.find(".//PMID")
@@ -79,6 +75,7 @@ async def _pubmed_fetch_abstracts(pmids: list[str]) -> dict:
         abstract = abs_elem.text if abs_elem is not None else ""
         if pmid:
             abstracts[pmid] = abstract
+
     return abstracts
 
 

@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .models import (
@@ -36,6 +34,7 @@ async def health():
 
 @app.post("/write-article", response_model=TrendArticle, tags=["write-article"])
 async def write_article(article: Article):
+    # TODO: Extract year from article title and feed into pipeline config
     config = PipelineConfig()
     summaries = load_pubmed_summaries(config)
 
