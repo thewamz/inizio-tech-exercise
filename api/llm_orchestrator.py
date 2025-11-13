@@ -1,16 +1,13 @@
-from __future__ import annotations
-
 import json
 import os
 from typing import List, Tuple
 
 from langchain_openai import ChatOpenAI
-# from langchain.schema import HumanMessage
 from langchain_core.messages import HumanMessage
 
-from .models import PubMedArticle, SummaryResult, TrendArticle
+from .models import PubMedArticle, SummaryResult
 
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-nano")
 
 LLM = ChatOpenAI(
     model=OPENAI_MODEL,
@@ -46,8 +43,8 @@ async def generate_lay_summary(article: PubMedArticle) -> str:
     ABSTRACT:
     \"\"\"{article.abstract}\"\"\""""
 
-    resp = await LLM.ainvoke([HumanMessage(content=prompt)])
-    return resp.content.strip()
+    response = await LLM.ainvoke([HumanMessage(content=prompt)])
+    return response.content.strip()
 
 
 async def check_hallucinations(article: PubMedArticle, summary: str) -> Tuple[int, List[str]]:
@@ -79,8 +76,8 @@ async def check_hallucinations(article: PubMedArticle, summary: str) -> Tuple[in
     SUMMARY:
     \"\"\"{summary}\"\"\""""
 
-    resp = await LLM.ainvoke([HumanMessage(content=prompt)])
-    raw = resp.content.strip()
+    response = await LLM.ainvoke([HumanMessage(content=prompt)])
+    raw = response.content.strip()
 
     try:
         data = json.loads(raw)
@@ -95,13 +92,6 @@ async def generate_trend_article(title: str, summaries: List[SummaryResult]) -> 
     """
     Generate an article in plain English
     """
-    # bullet_points = []
-    # for s in summaries:
-    #     bullet_points.append(
-    #         f"- PMID {s.pmid}: {s.title}\n  Summary: {s.summary}"
-    #     )
-    # bullet_block = "\n".join(bullet_points)
-
     article_summaries = "\n".join(s.summary for s in summaries)
 
     prompt = f"""
@@ -130,8 +120,8 @@ async def generate_trend_article(title: str, summaries: List[SummaryResult]) -> 
     {article_summaries}
     """
 
-    resp = await LLM.ainvoke([HumanMessage(content=prompt)])
-    return resp.content.strip()
+    response = await LLM.ainvoke([HumanMessage(content=prompt)])
+    return response.content.strip()
 
 
 async def verify_trend_article(
@@ -144,13 +134,6 @@ async def verify_trend_article(
       by any of the individual summaries.
     - Return a list of unsupported claims.
     """
-    # bullet_points = []
-    # for s in summaries:
-    #     bullet_points.append(
-    #         f"- PMID {s.pmid}: {s.title}\n  Summary: {s.summary}"
-    #     )
-    # bullet_block = "\n".join(bullet_points)
-
     article_summaries = "\n".join(s.summary for s in summaries)
 
     prompt = f"""
@@ -191,8 +174,8 @@ async def verify_trend_article(
     {article_summaries}
     """
 
-    resp = await LLM.ainvoke([HumanMessage(content=prompt)])
-    raw = resp.content.strip()
+    response = await LLM.ainvoke([HumanMessage(content=prompt)])
+    raw = response.content.strip()
 
     try:
         data = json.loads(raw)
