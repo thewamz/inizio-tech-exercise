@@ -47,6 +47,11 @@ Use python directly: `uvicorn api.main:app --reload`
 
 ### Usage
 
+To fetch data from PubMed, run `python run_pipeline.py`.
+
+The pipeline will fetch articles from the PubMed API, generate summaries in plain English and
+check to make sure there is limited hallucinations being produced by the LLM.
+
 To generate an article, send a POST request to `localhost:8000/write-article`.
 
 The POST request must include the title of the article in the body.
